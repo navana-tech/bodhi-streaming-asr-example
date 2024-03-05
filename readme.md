@@ -66,12 +66,11 @@ $ pip install -r requirements.txt
 ## Usage
 
 ```bash
-$ python streaming.py -f loan.wav -r 16000
+$ python streaming.py -f loan.wav
 ```
 
 Options:
 -f: File name of the audio file to be streamed.
--r: Sample rate of the audio file (in this example, set to 16000).
 
 # Available ASR Models for Testing
 

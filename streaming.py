@@ -142,18 +142,8 @@ async def main():
         return
 
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument(
-        "-l",
-        "--list-devices",
-        action="store_true",
-        help="show list of audio devices and exit",
-    )
 
     args, remaining = parser.parse_known_args()
-    if args.list_devices:
-        print("This script is used to run streaming client script from Cloud VM")
-        print("Not using a sound card when running this script")
-        parser.exit(0)
 
     parser = argparse.ArgumentParser(
         description="ASR Server",
@@ -167,12 +157,6 @@ async def main():
         metavar="URL",
         help="Server URL",
         default="wss://streaming.navana.ai",
-    )
-    parser.add_argument(
-        "-d", "--device", type=int_or_str, help="input device (numeric ID or substring)"
-    )
-    parser.add_argument(
-        "-r", "--samplerate", type=int, help="sampling rate", default=8000
     )
     parser.add_argument("-f", "--file", type=str, help="wave/audio file path")
 
