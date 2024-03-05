@@ -43,7 +43,6 @@ The received response format will be a JSON object.
 - **Segment_id:**
 
   - _Unique identifier associated with every speech segment during the entire active socket connection_
-  - _Usually, a speech segment is 4-10 seconds long_
 
 - **Text:**
 
