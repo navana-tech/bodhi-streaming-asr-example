@@ -165,7 +165,7 @@ async def main():
     if args.file:
         await run_test(api_key, customer_id)
 
-    if not args.list_devices and not args.file:
+    if not args.file:
         print(
             "This script is meant to show how to connect to Navana Streaming Speech Recognition API endpoint through websockets\n"
         )
