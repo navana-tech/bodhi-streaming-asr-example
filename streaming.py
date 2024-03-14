@@ -156,7 +156,7 @@ async def main():
         type=str,
         metavar="URL",
         help="Server URL",
-        default="wss://streaming.navana.ai",
+        default="wss://bodhi.navana.ai",
     )
     parser.add_argument("-f", "--file", type=str, help="wave/audio file path")
 
