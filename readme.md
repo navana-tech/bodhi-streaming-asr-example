@@ -6,7 +6,7 @@
 
 - **Endpoint:** Websocket streaming speech API endpoint
 
-  - `wss://streaming.navana.ai`
+  - `wss://bodhi.navana.ai`
 
 - **Sample Script:**
   - `streaming.py` (for static audio files)
