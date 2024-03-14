@@ -79,5 +79,6 @@ Options:
 - **Marathi:** `mr-general-jan24-v1-8khz`
 - **Tamil:** `ta-general-jan24-v1-8khz`
 - **Telugu:** `te-general-jan24-v1-8khz`
+- **HindiAwaazDe:** `hi-awaazde-nov21-v1-8khz` 
 
 For testing the code, modify the `.py` file with the model name you want to use.

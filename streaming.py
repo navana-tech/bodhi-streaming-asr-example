@@ -109,7 +109,8 @@ async def run_test(api_key, customer_id):
                         # Change the model based on your preference
                         # Bengali - bn-general-jan24-v1-8khz
                         # Hindi - hi-general-feb24-v1-8khz
-                        # Kannada - kn-general-jan24-v1-8khz
+                        # Hindi Awaaz De - hi-awaazde-nov21-v1-8khz
+			# Kannada - kn-general-jan24-v1-8khz
                         # Marathi - mr-general-jan24-v1-8khz
                         # Tamil - ta-general-jan24-v1-8khz
                         # Telugu - te-general-jan24-v1-8khz
