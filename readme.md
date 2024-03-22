@@ -71,6 +71,20 @@ $ python streaming.py -f loan.wav
 Options:
 -f: File name of the audio file to be streamed.
 
+# Audio Stream Requirements
+
+To ensure optimal compatibility and performance with our audio processing system, please adhere to the following audio stream requirements:
+
+- **Encoding/Bit Depth**: 16Bit PCM with a 2 Byte depth, providing high-quality audio representation.
+
+- **Minimum Sample Rate**: The audio must have a sample rate of at least 8000Hz.
+
+- **Fixed Streaming Rate**: Audio packets should be streamed at a fixed size (100ms - 500 ms), ensuring consistent data flow. 
+
+- **Channels**: Audio must be single-channel (Mono) to ensure compatibility with our processing pipeline.
+
+- **Speakers**: Initially, support is provided for a single speaker per channel. However, support for multiple speakers on a single channel is under development and will be announced soon.
+
 # Available ASR Models for Testing
 
 - **Bengali:** `bn-general-jan24-v1-8khz`
