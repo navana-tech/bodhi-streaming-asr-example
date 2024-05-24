@@ -105,11 +105,10 @@ async def run_test(api_key, customer_id):
                     "config": {
                         "sample_rate": sample_rate,
                         "transaction_id": str(uuid.uuid4()),
-                        "model": "hi-general-feb24-v1-8khz",
+                        "model": "hi-general-v2-8khz",
                         # Change the model based on your preference
-                        # Bengali - bn-general-jan24-v1-8khz
-                        # Hindi - hi-general-feb24-v1-8khz
-                        # Telugu - te-general-jan24-v1-8khz
+                        # Kannada - kn-general-v2-8khz
+                        # Hindi - hi-general-v2-8khz
                     }
                 }
             )
