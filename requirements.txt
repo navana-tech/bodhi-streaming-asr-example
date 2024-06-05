@@ -3,3 +3,4 @@ wave
 argparse
 asyncio
 certifi
+sounddevice
