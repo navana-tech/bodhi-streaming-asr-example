@@ -4,3 +4,4 @@ argparse
 asyncio
 certifi
 sounddevice
+numpy
