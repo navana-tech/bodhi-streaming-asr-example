@@ -22,7 +22,7 @@ try:
 except ImportError:
     print("please run:")
     print("")
-    print("  pip3 install websockets")
+    print("  pip install websockets")
     print("")
     sys.exit(-1)
 

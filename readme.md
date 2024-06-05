@@ -10,6 +10,7 @@
 
 - **Sample Script:**
   - `streaming.py` (for static audio files)
+  - `streaming-microphone.py` (for real-time audio capture from the microphone)
 
 ### Access Token
 
@@ -66,6 +67,8 @@ $ pip install -r requirements.txt
 
 ```bash
 $ python streaming.py -f loan.wav
+             OR
+$ python streaming-microphone.py
 ```
 
 Options:
@@ -79,7 +82,7 @@ To ensure optimal compatibility and performance with our audio processing system
 
 - **Minimum Sample Rate**: The audio must have a sample rate of at least 8000Hz.
 
-- **Fixed Streaming Rate**: Audio packets should be streamed at (chunk_duration_ms) a fixed size (50 - 500 ms), ensuring consistent data flow. We recommend using 100 ms as shown in the example script. 
+- **Fixed Streaming Rate**: Audio packets should be streamed at (chunk_duration_ms) a fixed size (50 - 500 ms), ensuring consistent data flow. We recommend using 100 ms as shown in the example script.
 
 - **Channels**: Audio must be single-channel (Mono) to ensure compatibility with our processing pipeline.
 
