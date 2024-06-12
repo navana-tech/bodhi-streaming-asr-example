@@ -109,6 +109,8 @@ async def run_test(api_key, customer_id):
                         # Change the model based on your preference
                         # Kannada - kn-general-v2-8khz
                         # Hindi - hi-general-v2-8khz
+                        # Marathi - mr-general-v2-8khz
+                        # Tamil - ta-general-v2-8khz
                     }
                 }
             )
