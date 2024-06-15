@@ -111,6 +111,7 @@ async def run_test(api_key, customer_id):
                         # Hindi - hi-general-v2-8khz
                         # Marathi - mr-general-v2-8khz
                         # Tamil - ta-general-v2-8khz
+                        # Bengali - bn-general-v2-8khz
                     }
                 }
             )
