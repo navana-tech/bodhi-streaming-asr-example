@@ -48,13 +48,18 @@ def transcribe_audio(audio_file_path, model):
         "x-api-key": API_KEY,
     }
 
-    # Send POST request to Bodhi API
-    response = requests.post(URL, headers=headers, data=payload, files=files)
+    try:
+        # Send POST request to Bodhi API
+        response = requests.post(URL, headers=headers, data=payload, files=files)
+        response.raise_for_status()
 
-    # Parse JSON string
-    data = response.json()
+        # Parse JSON string
+        data = response.json()
 
-    print(f"Received data: Call_id={data['call_id']}, " f"Text={data['text']}")
+        print(f"Received data: Call_id={data['call_id']}, Text={data['text']}")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error occurred: {e}")
 
 
 # Example usage
