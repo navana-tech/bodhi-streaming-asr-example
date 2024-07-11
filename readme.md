@@ -1,24 +1,39 @@
 # Navana Streaming ASR Instructions
 
-## How to Stream
+## How to use
 
-### Connection Instructions
+### Connection Instructions for streaming
 
 - **Endpoint:** Websocket streaming speech API endpoint
 
-  - `wss://bodhi.navana.ai`
+- `wss://bodhi.navana.ai`
 
 - **Sample Script:**
-  - `streaming.py` (for static audio files)
-  - `streaming-microphone.py` (for real-time audio capture from the microphone)
+
+- `streaming.py` (for static audio files)
+
+- `streaming-microphone.py` (for real-time audio capture from the microphone)
+
+### Connection Instructions for non streaming
+
+- **Endpoint:** Websocket streaming speech API endpoint
+
+- `https://bodhi.navana.ai/api/transcribe`
+
+- **Sample Script:**
+
+- `non-streaming-api.py` (for local audio files)
 
 ### Access Token
 
 Store the authentication headers in env to access the streaming speech API endpoints:
 
 ```bash
-$ export API_KEY=YOUR_API_KEY
-$ export CUSTOMER_ID=YOUR_CUSTOMER_ID
+
+$  export  API_KEY=YOUR_API_KEY
+
+$  export  CUSTOMER_ID=YOUR_CUSTOMER_ID
+
 ```
 
 ### Brief Description of Response Format
@@ -28,50 +43,73 @@ The received response format will be a JSON object.
 ```json
 {
   "call_id": "CALL_ID",
+
+  "text": "TRANSCRIPT",
+
   "segment_id": "SEGMENT_ID",
+
   "eos": false,
-  "type": "partial",
-  "text": "TRANSCRIPT"
+
+  "type": "partial"
 }
 ```
+
+**Note**: This JSON structure outlines the fields returned in responses. However, `segment_id`, `eos`, and `type` are exclusive to streaming responses.
 
 #### Keys Description
 
 - **Call_id:**
 
-  - _Unique identifier associated with every streaming connection_
+- _Unique identifier associated with every streaming connection_
 
 - **Segment_id:**
 
-  - _Unique identifier associated with every speech segment during the entire active socket connection_
+- _Unique identifier associated with every speech segment during the entire active socket connection_
 
 - **Text:**
 
-  - _If type = "partial"_
-    - _Partial transcript corresponding to every streaming audio chunk_
-    - _Partial transcripts for every audio chunk (will be for a 100ms audio chunk if streaming audio packet size is 100ms)_
-  - _If type = "complete"_
-    - _Complete/final transcript generated for each speech segment_
-    - _Generated once per segment_id i.e., when the speech segment end is reached_
+- _If type = "partial"_
+
+- _Partial transcript corresponding to every streaming audio chunk_
+
+- _Partial transcripts for every audio chunk (will be for a 100ms audio chunk if streaming audio packet size is 100ms)_
+
+- _If type = "complete"_
+
+- _Complete/final transcript generated for each speech segment_
+
+- _Generated once per segment_id i.e., when the speech segment end is reached_
 
 - **eos:**
-  - _If 'eos' is true, marks the end of the streaming connection_
+
+- _If 'eos' is true, marks the end of the streaming connection_
 
 #### Install packages
 
 ```bash
-$ pip install -r requirements.txt
+
+$  pip  install  -r  requirements.txt
+
 ```
 
 ## Usage
 
 ```bash
-$ python streaming.py -f loan.wav
-             OR
-$ python streaming-microphone.py
+
+$  python  streaming.py  -f  loan.wav
+
+OR
+
+$  python  streaming-microphone.py
+
+OR
+
+$  python3  non-streaming-api.py  -f  loan.wav
+
 ```
 
 Options:
+
 -f: File name of the audio file to be streamed.
 
 # Audio Stream Requirements
@@ -91,10 +129,15 @@ To ensure optimal compatibility and performance with our audio processing system
 # Available ASR Models for Testing
 
 - **Hindi:** `hi-general-v2-8khz`
+
 - **Kannada:** `kn-general-v2-8khz`
+
 - **Marathi:** `mr-general-v2-8khz`
+
 - **Tamil:** `ta-general-v2-8khz`
+
 - **Bengali** `bn-general-v2-8khz`
+
 - **English** `en-general-v2-8khz`
 
 For testing the code, modify the `.py` file with the model name you want to use.
