@@ -1,6 +1,7 @@
 import os
 import requests
 import uuid
+import argparse
 
 # Ensure API_KEY and CUSTOMER_ID are set as global variables
 API_KEY = os.getenv("API_KEY")
@@ -14,7 +15,7 @@ def transcribe_audio(audio_file_path, model):
 
     Parameters:
     - audio_file_path (str): Path to the audio file to transcribe.
-    - model (str): Model name for transcription.".
+    - model (str): Model name for transcription.
 
     Returns:
     - str: Response text from the API.
@@ -53,14 +54,35 @@ def transcribe_audio(audio_file_path, model):
     # Parse JSON string
     data = response.json()
 
-    print(
-        f"Received data: Call_id={data["call_id"]}, "
-        f"Text={data["text"]}"
-    )
+    print(f"Received data: Call_id={data['call_id']}, " f"Text={data['text']}")
 
 
 # Example usage
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Transcribe audio using Bodhi API.")
+    parser.add_argument(
+        "-f",
+        dest="audio_file",
+        required=True,
+        help="Path to the audio file to transcribe",
+    )
+    parser.add_argument(
+        "-m",
+        dest="model",
+        default="hi-general-v2-8khz",
+        choices=[
+            "kn-general-v2-8khz",
+            "hi-general-v2-8khz",
+            "mr-general-v2-8khz",
+            "ta-general-v2-8khz",
+            "bn-general-v2-8khz",
+            "en-general-v2-8khz",
+        ],
+        help="Model name for transcription (default: hi-general-v2-8khz)",
+    )
+
+    args = parser.parse_args()
+
     try:
         # Check if API_KEY and CUSTOMER_ID are available
         if not API_KEY or not CUSTOMER_ID:
@@ -68,15 +90,8 @@ if __name__ == "__main__":
                 "Please set API key and customer ID in environment variables."
             )
 
-        audio_file_path = "loan.wav"
-        model = "hi-general-v2-8khz"
-        # Change the model based on your preference
-        # Kannada - kn-general-v2-8khz
-        # Hindi - hi-general-v2-8khz
-        # Marathi - mr-general-v2-8khz
-        # Tamil - ta-general-v2-8khz
-        # Bengali - bn-general-v2-8khz
-        # English - en-general-v2-8khz
+        audio_file_path = args.audio_file
+        model = args.model
 
         # Call transcribe_audio function with the audio file
         transcribe_audio(audio_file_path, model)
