@@ -134,7 +134,7 @@ To ensure optimal compatibility and performance with our audio processing system
 
 - **Kannada:** `kn-general-v2-8khz`
 
-- **Kannada:** `kn-banking-v2-8khz`
+- **Kannada-Banking:** `kn-banking-v2-8khz`
 
 - **Marathi:** `mr-general-v2-8khz`
 
