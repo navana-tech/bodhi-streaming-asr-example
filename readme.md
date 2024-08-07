@@ -138,7 +138,11 @@ To ensure optimal compatibility and performance with our audio processing system
 
 - **Marathi:** `mr-general-v2-8khz`
 
+- **Marathi Banking:** `mr-banking-v2-8khz`
+
 - **Tamil:** `ta-general-v2-8khz`
+
+- **Tamil Banking:** `ta-banking-v2-8khz`
 
 - **Bengali** `bn-general-v2-8khz`
 
