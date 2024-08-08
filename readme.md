@@ -146,6 +146,8 @@ To ensure optimal compatibility and performance with our audio processing system
 
 - **Bengali** `bn-general-v2-8khz`
 
+- **Bengali Banking** `bn-general-v2-8khz`
+
 - **English** `en-general-v2-8khz`
 
 For testing the code, modify the `.py` file with the model name you want to use.
