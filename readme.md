@@ -150,4 +150,6 @@ To ensure optimal compatibility and performance with our audio processing system
 
 - **English** `en-general-v2-8khz`
 
+-  **English Banking** `en-banking-v2-8khz`
+
 For testing the code, modify the `.py` file with the model name you want to use.
