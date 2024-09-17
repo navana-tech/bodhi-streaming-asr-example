@@ -87,46 +87,62 @@ async def run_test(api_key, customer_id):
     }
     chunk_duration_ms = 100
 
-    async with websockets.connect(
-        args.uri, extra_headers=request_headers, ssl=ssl_context
-    ) as ws:
+    try:
+        async with websockets.connect(
+            args.uri, extra_headers=request_headers, ssl=ssl_context
+        ) as ws:
 
-        wf = wave.open(args.file, "rb")
-        (channels, sample_width, sample_rate, num_samples, _, _) = wf.getparams()
-        print(
-            f"Channels = {channels}, Sample Rate = {sample_rate} Hz, Sample width = {sample_width} bytes",
-            file=sys.stderr,
-        )
-
-        # Sending initial configuration to the server
-        await ws.send(
-            json.dumps(
-                {
-                    "config": {
-                        "sample_rate": sample_rate,
-                        "transaction_id": str(uuid.uuid4()),
-                        "model": "hi-general-v2-8khz",
-                        # Change the model based on your preference
-                        # Kannada - kn-general-v2-8khz
-                        # Hindi - hi-general-v2-8khz
-                        # Marathi - mr-general-v2-8khz
-                        # Tamil - ta-general-v2-8khz
-                        # Bengali - bn-general-v2-8khz
-                        # English - en-general-v2-8khz
-                    }
-                }
+            wf = wave.open(args.file, "rb")
+            (channels, sample_width, sample_rate, num_samples, _, _) = wf.getparams()
+            print(
+                f"Channels = {channels}, Sample Rate = {sample_rate} Hz, Sample width = {sample_width} bytes",
+                file=sys.stderr,
             )
-        )
 
-        buffer_size = int(sample_rate * chunk_duration_ms / 1000)
-        interval_seconds = chunk_duration_ms / 1000.0
+            # Sending initial configuration to the server
+            await ws.send(
+                json.dumps(
+                    {
+                        "config": {
+                            "sample_rate": sample_rate,
+                            "transaction_id": str(uuid.uuid4()),
+                            "model": "hi-general-v2-8khz",
+                            # Change the model based on your preference
+                            # Kannada - kn-general-v2-8khz
+                            # Hindi - hi-general-v2-8khz
+                            # Marathi - mr-general-v2-8khz
+                            # Tamil - ta-general-v2-8khz
+                            # Bengali - bn-general-v2-8khz
+                            # English - en-general-v2-8khz
+                        }
+                    }
+                )
+            )
 
-        send_task = asyncio.create_task(
-            send_audio(ws, wf, buffer_size, interval_seconds)
-        )
-        recv_task = asyncio.create_task(receive_transcription(ws))
+            buffer_size = int(sample_rate * chunk_duration_ms / 1000)
+            interval_seconds = chunk_duration_ms / 1000.0
 
-        await asyncio.gather(send_task, recv_task)
+            send_task = asyncio.create_task(
+                send_audio(ws, wf, buffer_size, interval_seconds)
+            )
+            recv_task = asyncio.create_task(receive_transcription(ws))
+
+            await asyncio.gather(send_task, recv_task)
+    except websockets.exceptions.ConnectionClosed as e:
+        # Catching WebSocket connection closure
+        print(f"WebSocket connection closed with code: {e.code}, reason: {e.reason}", file=sys.stderr)
+    except websockets.exceptions.InvalidStatusCode as e:
+        # Catching invalid status code errors
+        print(f"WebSocket connection failed with status code: {e.status_code}", file=sys.stderr)
+        if e.status_code == 401:
+            print("Invalid API key or customer ID.", file=sys.stderr)
+        elif e.status_code == 402:
+            print("Insufficient balance.", file=sys.stderr)
+        elif e.status_code == 403:
+            print("Customer has been deactivated", file=sys.stderr)
+    except Exception as e:
+        # General exception handler for other errors
+        print(f"An error occurred: {e}", file=sys.stderr)
 
 
 # Main asynchronous function
