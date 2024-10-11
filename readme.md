@@ -112,6 +112,27 @@ Options:
 
 -f: File name of the audio file to be streamed.
 
+
+# Configuring the websocket
+
+After connecting to the websocket, you are required to send a configuration object specifying the model you would like to interact with amongst other options. You can do so in the following fashion: 
+
+```
+await ws.send(
+                json.dumps(
+                    {
+                        "config": {
+                            "sample_rate": sample_rate, // Required - specify the sample rate of the audio being streamed to the server. 
+                            "transaction_id": str(uuid.uuid4()), // Required - generate a unique UUID to tag the session
+                            "model": "hi-general-v2-8khz", // Required - specify the model you would like to use 
+                            "parse_number" : True, // Optional - convert text representing numbers into numericals
+                            "exclude_partial": True,  // Optional - only provide complete responses
+                        }
+                    }
+                )
+            )
+```
+
 # Audio Stream Requirements
 
 To ensure optimal compatibility and performance with our audio processing system, please adhere to the following audio stream requirements:
