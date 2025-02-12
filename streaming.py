@@ -88,9 +88,7 @@ async def run_test(api_key, customer_id):
     chunk_duration_ms = 100
 
     try:
-        async with websockets.connect(
-            args.uri, extra_headers=request_headers, ssl=ssl_context
-        ) as ws:
+        async with websockets.connect(args.uri, extra_headers=request_headers) as ws:
 
             wf = wave.open(args.file, "rb")
             (channels, sample_width, sample_rate, num_samples, _, _) = wf.getparams()
@@ -106,14 +104,16 @@ async def run_test(api_key, customer_id):
                         "config": {
                             "sample_rate": sample_rate,
                             "transaction_id": str(uuid.uuid4()),
-                            "model": "hi-general-v2-8khz",
+                            "model": "gu-banking-v2-8khz",
                             # Change the model based on your preference
-                            # Kannada - kn-general-v2-8khz
-                            # Hindi - hi-general-v2-8khz
-                            # Marathi - mr-general-v2-8khz
-                            # Tamil - ta-general-v2-8khz
-                            # Bengali - bn-general-v2-8khz
-                            # English - en-general-v2-8khz
+                            # Kannada - kn-banking-v2-8khz
+                            # Hindi - hi-banking-v2-8khz
+                            # Marathi - mr-banking-v2-8khz
+                            # Tamil - ta-banking-v2-8khz
+                            # Bengali - bn-banking-v2-8khz
+                            # English - en-banking-v2-8khz
+                            # Gujarati - gu-banking-v2-8khz
+                            # Malayalam - ml-banking-v2-8khz
                         }
                     }
                 )
@@ -130,10 +130,16 @@ async def run_test(api_key, customer_id):
             await asyncio.gather(send_task, recv_task)
     except websockets.exceptions.ConnectionClosed as e:
         # Catching WebSocket connection closure
-        print(f"WebSocket connection closed with code: {e.code}, reason: {e.reason}", file=sys.stderr)
+        print(
+            f"WebSocket connection closed with code: {e.code}, reason: {e.reason}",
+            file=sys.stderr,
+        )
     except websockets.exceptions.InvalidStatusCode as e:
         # Catching invalid status code errors
-        print(f"WebSocket connection failed with status code: {e.status_code}", file=sys.stderr)
+        print(
+            f"WebSocket connection failed with status code: {e.status_code}",
+            file=sys.stderr,
+        )
         if e.status_code == 401:
             print("Invalid API key or customer ID.", file=sys.stderr)
         elif e.status_code == 402:
@@ -142,7 +148,11 @@ async def run_test(api_key, customer_id):
             print("Customer has been deactivated", file=sys.stderr)
     except Exception as e:
         # General exception handler for other errors
-        print(f"An error occurred: {e}", file=sys.stderr)
+        print(f"An error occurred: {str(e)}", file=sys.stderr)
+        import traceback
+
+        print("Full error traceback:", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
 
 
 # Main asynchronous function
