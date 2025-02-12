@@ -88,8 +88,13 @@ async def run_test(api_key, customer_id):
     chunk_duration_ms = 100
 
     try:
-        async with websockets.connect(args.uri, extra_headers=request_headers) as ws:
+        connect_kwargs = {
+            "extra_headers": request_headers,
+        }
+        if args.uri.startswith("wss://"):
+            connect_kwargs["ssl"] = ssl_context
 
+        async with websockets.connect(args.uri, **connect_kwargs) as ws:
             wf = wave.open(args.file, "rb")
             (channels, sample_width, sample_rate, num_samples, _, _) = wf.getparams()
             print(
@@ -104,7 +109,7 @@ async def run_test(api_key, customer_id):
                         "config": {
                             "sample_rate": sample_rate,
                             "transaction_id": str(uuid.uuid4()),
-                            "model": "gu-banking-v2-8khz",
+                            "model": "hi-banking-v2-8khz",
                             # Change the model based on your preference
                             # Kannada - kn-banking-v2-8khz
                             # Hindi - hi-banking-v2-8khz
