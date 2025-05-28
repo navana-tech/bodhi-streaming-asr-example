@@ -148,5 +148,3 @@ To ensure optimal compatibility and performance with our audio processing system
 - **Speakers**: Initially, support is provided for a single speaker per channel. However, support for multiple speakers on a single channel is under development and will be announced soon.
 
 For testing the code, modify the `.py` file with the model name you want to use.
-
-For a complete list of available ASR models, please refer to the [main README.md](../../readme.md) file.

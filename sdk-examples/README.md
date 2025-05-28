@@ -29,5 +29,3 @@ python local_transcription.py
 python remote_transcription.py
 python streaming_transcription.py
 ```
-
-For a complete list of available ASR models, please refer to the [main README.md](../readme.md) file.
