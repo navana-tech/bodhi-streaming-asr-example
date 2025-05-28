@@ -88,23 +88,23 @@ The received response format will be a JSON object.
 
 ```bash
 
-$  pip  install  -r  requirements.txt
+$  pip install -r requirements.txt
 
 ```
 
-## Usage
+## Running Examples
 
 ```bash
 
-$  python  streaming.py  -f  loan.wav
+$  python streaming.py -f ../loan.wav
 
 OR
 
-$  python  streaming-microphone.py
+$  python streaming-microphone.py
 
 OR
 
-$  python3  non-streaming-api.py  -f  loan.wav
+$  python3 non-streaming-api.py -f ../loan.wav
 
 ```
 
@@ -146,43 +146,5 @@ To ensure optimal compatibility and performance with our audio processing system
 - **Channels**: Audio must be single-channel (Mono) to ensure compatibility with our processing pipeline.
 
 - **Speakers**: Initially, support is provided for a single speaker per channel. However, support for multiple speakers on a single channel is under development and will be announced soon.
-
-# Available ASR Models for Testing
-
-- **Hindi:** `hi-general-v2-8khz`
-
-- **Hindi-Banking:** `hi-banking-v2-8khz`
-
-- **Kannada:** `kn-general-v2-8khz`
-
-- **Kannada-Banking:** `kn-banking-v2-8khz`
-
-- **Marathi:** `mr-general-v2-8khz`
-
-- **Marathi Banking:** `mr-banking-v2-8khz`
-
-- **Tamil:** `ta-general-v2-8khz`
-
-- **Tamil Banking:** `ta-banking-v2-8khz`
-
-- **Bengali** `bn-general-v2-8khz`
-
-- **Bengali Banking** `bn-banking-v2-8khz`
-
-- **English** `en-general-v2-8khz`
-
-- **English Banking** `en-banking-v2-8khz`
-
-- **Gujarati** `gu-general-v2-8khz`
-
-- **Gujarati Banking** `gu-banking-v2-8khz`
-
-- **Telugu** `te-general-v2-8khz`
-
-- **Telugu Banking** `te-banking-v2-8khz`
-
-- **Malayalam** `ml-general-v2-8khz`
-
-- **Malayalam Banking** `ml-banking-v2-8khz`
 
 For testing the code, modify the `.py` file with the model name you want to use.
