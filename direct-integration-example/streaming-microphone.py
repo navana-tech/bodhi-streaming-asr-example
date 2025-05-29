@@ -17,14 +17,8 @@ except ImportError:
     print()
     sys.exit(-1)
 
-try:
-    import websockets
-except ImportError:
-    print("please run:")
-    print("")
-    print("  pip install websockets")
-    print("")
-    sys.exit(-1)
+import aiohttp
+from aiohttp import WSMsgType
 
 
 def get_args():
@@ -89,9 +83,9 @@ async def inputstream_generator(device, channels=1, samplerate=16000):
 async def receive_transcription(ws):
     complete_sentences = []
 
-    async for response in ws:
-        try:
-            response_data = json.loads(response)
+    async for msg in ws:
+        if msg.type == WSMsgType.TEXT:
+            response_data = json.loads(msg.data)
 
             call_id = response_data["call_id"]
             segment_id = response_data["segment_id"]
@@ -113,11 +107,15 @@ async def receive_transcription(ws):
             if response_data["eos"]:
                 print("Complete transcript: ", ", ".join(complete_sentences))
                 break
-        except Exception as e:
-            if isinstance(e, websockets.exceptions.ConnectionClosedOK):
-                print("WebSocket connection closed.")
-            else:
-                print(f"An error occurred: {e}")
+        elif msg.type == WSMsgType.BINARY:
+            # Handle binary messages if necessary
+            pass
+        elif msg.type == WSMsgType.CLOSE:
+            print("WebSocket connection closed by server.")
+            break
+        elif msg.type == WSMsgType.ERROR:
+            print(f"WebSocket error: {msg.data}")
+            break
 
     return complete_sentences
 
@@ -136,41 +134,61 @@ async def run(server_addr: str, device: int, stop_event: asyncio.Event):
         "x-customer-id": customer_id,
     }
 
-    async with websockets.connect(
-        f"{server_addr}", extra_headers=request_headers
-    ) as ws:
-        await ws.send(
-            json.dumps(
-                {
-                    "config": {
-                        "sample_rate": 16000,
-                        "transaction_id": str(uuid.uuid4()),
-                        "model": "hi-general-v2-8khz",
-                        # Change the model based on your preference
-                        # Kannada - kn-general-v2-8khz
-                        # Hindi - hi-general-v2-8khz
+    async with aiohttp.ClientSession() as session:
+        async with session.ws_connect(f"{server_addr}", headers=request_headers) as ws:
+            await ws.send_str(
+                json.dumps(
+                    {
+                        "config": {
+                            "sample_rate": 16000,
+                            "transaction_id": str(uuid.uuid4()),
+                            "model": "hi-general-v2-8khz",
+                            # Change the model based on your preference
+                            # Kannada - kn-general-v2-8khz
+                            # Hindi - hi-general-v2-8khz
+                        }
                     }
-                }
+                )
             )
-        )
 
-        receive_task = asyncio.create_task(receive_transcription(ws))
+            send_task = asyncio.create_task(
+                send_audio(ws, inputstream_generator(device=device), stop_event)
+            )
+            recv_task = asyncio.create_task(receive_transcription(ws))
 
-        try:
-            async for indata, status in inputstream_generator(device=device):
-                if status:
-                    print(status)
-                await ws.send(indata.tobytes())  # Send raw bytes directly
-                if stop_event.is_set():
-                    break
-        except asyncio.CancelledError:
-            print("Run task cancelled")
-            raise
-        except Exception as e:
-            print(f"An error occurred in run: {e}")
-        finally:
-            await ws.send('{"eof": 1}')
-            await receive_task
+            done, pending = await asyncio.wait(
+                [send_task, recv_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in pending:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
+            # Ensure the receive task is awaited if it's still running
+            if not recv_task.done():
+                await recv_task
+
+            await ws.send_str('{"eof": 1}')
+
+
+async def send_audio(ws, input_generator, stop_event):
+    try:
+        async for indata, status in input_generator:
+            if status:
+                print(status)
+            await ws.send_bytes(indata.tobytes())
+            if stop_event.is_set():
+                break
+    except asyncio.CancelledError:
+        print("Send audio task cancelled.")
+    except Exception as e:
+        print(f"An error occurred in send_audio: {e}")
+    finally:
+        pass
 
 
 async def main():
