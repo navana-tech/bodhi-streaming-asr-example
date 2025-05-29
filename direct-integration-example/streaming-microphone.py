@@ -8,6 +8,8 @@ import uuid
 
 import numpy as np
 
+EOF_MESSAGE = '{"eof": 1}'
+
 try:
     import sounddevice as sd
 except ImportError:
@@ -107,9 +109,6 @@ async def receive_transcription(ws):
             if response_data["eos"]:
                 print("Complete transcript: ", ", ".join(complete_sentences))
                 break
-        elif msg.type == WSMsgType.BINARY:
-            # Handle binary messages if necessary
-            pass
         elif msg.type == WSMsgType.CLOSE:
             print("WebSocket connection closed by server.")
             break
@@ -172,7 +171,7 @@ async def run(server_addr: str, device: int, stop_event: asyncio.Event):
             if not recv_task.done():
                 await recv_task
 
-            await ws.send_str('{"eof": 1}')
+            await ws.send_str(EOF_MESSAGE)
 
 
 async def send_audio(ws, input_generator, stop_event):

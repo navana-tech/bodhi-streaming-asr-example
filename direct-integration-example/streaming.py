@@ -8,6 +8,8 @@ import uuid
 import ssl
 import argparse
 
+EOF_MESSAGE = '{"eof": 1}'
+
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
@@ -67,7 +69,7 @@ async def send_audio(ws, wf, buffer_size, interval_seconds):
         await ws.send_bytes(data)
         await asyncio.sleep(interval_seconds)
     # Send EOF JSON message
-    await ws.send_str('{"eof": 1}')
+    await ws.send_str(EOF_MESSAGE)
 
 
 async def run_test(api_key, customer_id, uri, filepath):
