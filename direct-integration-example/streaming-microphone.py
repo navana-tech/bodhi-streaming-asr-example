@@ -89,6 +89,14 @@ async def receive_transcription(ws):
         if msg.type == WSMsgType.TEXT:
             response_data = json.loads(msg.data)
 
+            error = response_data.get("Error")
+            if error != "":
+                print(
+                    f"Server Error: Type={response_data.get('error')}, Message={response_data.get('message')}, Code={response_data.get('code')}, Timestamp={response_data.get('timestamp')}",
+                    file=sys.stderr,
+                )
+                break
+
             call_id = response_data["call_id"]
             segment_id = response_data["segment_id"]
             transcript_type = response_data["type"]
@@ -128,50 +136,66 @@ async def run(server_addr: str, device: int, stop_event: asyncio.Event):
         print("Please set API key and customer ID in environment variables.")
         return
 
-    request_headers = {
-        "x-api-key": api_key,
-        "x-customer-id": customer_id,
-    }
+    request_headers = {"x-api-key": api_key, "x-customer-id": customer_id}
 
     async with aiohttp.ClientSession() as session:
-        async with session.ws_connect(f"{server_addr}", headers=request_headers) as ws:
-            await ws.send_str(
-                json.dumps(
-                    {
-                        "config": {
-                            "sample_rate": 16000,
-                            "transaction_id": str(uuid.uuid4()),
-                            "model": "hi-general-v2-8khz",
-                            # Change the model based on your preference
-                            # Kannada - kn-general-v2-8khz
-                            # Hindi - hi-general-v2-8khz
+        try:
+            async with session.ws_connect(
+                f"{server_addr}", headers=request_headers
+            ) as ws:
+                await ws.send_str(
+                    json.dumps(
+                        {
+                            "config": {
+                                "sample_rate": 16000,
+                                "transaction_id": str(uuid.uuid4()),
+                                "model": "hi-general-v2-8khz",
+                                # Change the model based on your preference
+                                # Kannada - kn-general-v2-8khz
+                                # Hindi - hi-general-v2-8khz
+                            }
                         }
-                    }
+                    )
                 )
-            )
 
-            send_task = asyncio.create_task(
-                send_audio(ws, inputstream_generator(device=device), stop_event)
-            )
-            recv_task = asyncio.create_task(receive_transcription(ws))
+                send_task = asyncio.create_task(
+                    send_audio(ws, inputstream_generator(device=device), stop_event)
+                )
+                recv_task = asyncio.create_task(receive_transcription(ws))
 
-            done, pending = await asyncio.wait(
-                [send_task, recv_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+                done, pending = await asyncio.wait(
+                    [send_task, recv_task],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
 
-            for task in pending:
-                task.cancel()
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass
+                for task in pending:
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
 
-            # Ensure the receive task is awaited if it's still running
-            if not recv_task.done():
-                await recv_task
+                # Ensure the receive task is awaited if it's still running
+                if not recv_task.done():
+                    await recv_task
 
-            await ws.send_str(EOF_MESSAGE)
+                await ws.send_str(EOF_MESSAGE)
+
+        except aiohttp.WSServerHandshakeError as e:
+            if e.status == 401:
+                print("Invalid API key or customer ID.", file=sys.stderr)
+            elif e.status == 402:
+                print("Insufficient balance.", file=sys.stderr)
+            elif e.status == 403:
+                print("Customer has been deactivated", file=sys.stderr)
+        except aiohttp.ClientConnectionError as e:
+            print(f"Connection error: {str(e)}", file=sys.stderr)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}", file=sys.stderr)
+            import traceback
+
+            print("Full error traceback:", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
 
 
 async def send_audio(ws, input_generator, stop_event):
