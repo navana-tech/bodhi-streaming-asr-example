@@ -54,7 +54,7 @@ def select_device():
         selected_device = input_devices[selected_device_idx]
 
     print(f'Selected device: {selected_device["name"]}')
-    return selected_device["index"]
+    return selected_device["index"], int(selected_device["default_samplerate"])
 
 
 async def inputstream_generator(device, channels=1, samplerate=16000):
@@ -89,8 +89,8 @@ async def receive_transcription(ws):
         if msg.type == WSMsgType.TEXT:
             response_data = json.loads(msg.data)
 
-            error = response_data.get("Error")
-            if error != "":
+            error = response_data.get("error")
+            if error is not None:
                 print(
                     f"Server Error: Type={response_data.get('error')}, Message={response_data.get('message')}, Code={response_data.get('code')}, Timestamp={response_data.get('timestamp')}",
                     file=sys.stderr,
@@ -127,7 +127,9 @@ async def receive_transcription(ws):
     return complete_sentences
 
 
-async def run(server_addr: str, device: int, stop_event: asyncio.Event):
+async def run(
+    server_addr: str, device: int, samplerate: int, stop_event: asyncio.Event
+):
     # Fetch API key and customer ID from environment variables
     api_key = os.environ.get("API_KEY")
     customer_id = os.environ.get("CUSTOMER_ID")
@@ -147,7 +149,7 @@ async def run(server_addr: str, device: int, stop_event: asyncio.Event):
                     json.dumps(
                         {
                             "config": {
-                                "sample_rate": 16000,
+                                "sample_rate": samplerate,
                                 "transaction_id": str(uuid.uuid4()),
                                 "model": "hi-general-v2-8khz",
                                 # Change the model based on your preference
@@ -159,7 +161,11 @@ async def run(server_addr: str, device: int, stop_event: asyncio.Event):
                 )
 
                 send_task = asyncio.create_task(
-                    send_audio(ws, inputstream_generator(device=device), stop_event)
+                    send_audio(
+                        ws,
+                        inputstream_generator(device=device, samplerate=samplerate),
+                        stop_event,
+                    )
                 )
                 recv_task = asyncio.create_task(receive_transcription(ws))
 
@@ -218,7 +224,8 @@ async def main():
     args = get_args()
 
     server_addr = args.server_addr
-    device = select_device()
+    device, samplerate = select_device()
+    print(f"Using device {device} with samplerate {samplerate}")
 
     stop_event = asyncio.Event()
 
@@ -232,8 +239,10 @@ async def main():
         await run(
             server_addr=server_addr,
             device=device,
+            samplerate=samplerate,
             stop_event=stop_event,
         )
+
     except asyncio.CancelledError:
         print("Main task cancelled")
 
