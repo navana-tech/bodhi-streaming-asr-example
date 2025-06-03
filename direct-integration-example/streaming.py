@@ -31,8 +31,9 @@ async def receive_transcription(ws):
                 response_data = json.loads(msg.data)
 
                 # server will return an error if anything goes wrong, check for that before proceeding with the logic
-                error = response_data.get("Error")
-                if error != "":
+                error = response_data.get("error")
+
+                if error is not None:
                     print(
                         f"Server Error: Type={response_data.get('error')}, Message={response_data.get('message')}, Code={response_data.get('code')}, Timestamp={response_data.get('timestamp')}",
                         file=sys.stderr,
