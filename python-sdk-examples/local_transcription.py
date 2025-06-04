@@ -72,12 +72,16 @@ async def main():
 
     try:
         # For local file transcription, the events will be emitted during the transcribe_local_file call
-        result = await client.transcribe_local_file(audio_file, config=config)
-        logging.info("Final result: %s", result)
+        await client.transcribe_local_file(audio_file, config=config)
         logging.info("Local file transcription finished.")
     except Exception as e:
         logging.error(f"Error during transcription: {str(e)}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except asyncio.CancelledError:
+        logging.error("Streaming task was cancelled.")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")

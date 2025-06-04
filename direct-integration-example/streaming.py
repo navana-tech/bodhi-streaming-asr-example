@@ -30,6 +30,16 @@ async def receive_transcription(ws):
             try:
                 response_data = json.loads(msg.data)
 
+                # server will return an error if anything goes wrong, check for that before proceeding with the logic
+                error = response_data.get("error")
+
+                if error is not None:
+                    print(
+                        f"Server Error: Type={response_data.get('error')}, Message={response_data.get('message')}, Code={response_data.get('code')}, Timestamp={response_data.get('timestamp')}",
+                        file=sys.stderr,
+                    )
+                    break
+
                 call_id = response_data.get("call_id")
                 segment_id = response_data.get("segment_id")
                 transcript_type = response_data.get("type")
@@ -79,9 +89,13 @@ async def run_test(api_key, customer_id, uri, filepath):
     }
     chunk_duration_ms = 100
 
-    connector = aiohttp.TCPConnector(ssl=ssl_context if uri.startswith("wss://") else None)
+    connector = aiohttp.TCPConnector(
+        ssl=ssl_context if uri.startswith("wss://") else None
+    )
 
-    async with aiohttp.ClientSession(connector=connector, headers=request_headers) as session:
+    async with aiohttp.ClientSession(
+        connector=connector, headers=request_headers
+    ) as session:
         try:
             async with session.ws_connect(uri) as ws:
                 wf = wave.open(filepath, "rb")
@@ -115,13 +129,18 @@ async def run_test(api_key, customer_id, uri, filepath):
                 buffer_size = int(sample_rate * chunk_duration_ms / 1000)
                 interval_seconds = chunk_duration_ms / 1000.0
 
-                send_task = asyncio.create_task(send_audio(ws, wf, buffer_size, interval_seconds))
+                send_task = asyncio.create_task(
+                    send_audio(ws, wf, buffer_size, interval_seconds)
+                )
                 recv_task = asyncio.create_task(receive_transcription(ws))
 
                 await asyncio.gather(send_task, recv_task)
 
         except aiohttp.WSServerHandshakeError as e:
-            print(f"WebSocket handshake failed with status code: {e.status}", file=sys.stderr)
+            print(
+                f"WebSocket handshake failed with status code: {e.status}",
+                file=sys.stderr,
+            )
             if e.status == 401:
                 print("Invalid API key or customer ID.", file=sys.stderr)
             elif e.status == 402:

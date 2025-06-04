@@ -59,7 +59,11 @@ def transcribe_audio(audio_file_path, model):
         print(f"Received data: Call_id={data['call_id']}, Text={data['text']}")
 
     except requests.exceptions.RequestException as e:
-        print(f"Error occurred: {e}")
+        if e.response is not None and e.response.status_code in [400, 401, 402, 403]:
+            status_code = e.response.status_code
+            print(f"Error: HTTP Status Code {status_code} - {e.response.text}")
+        else:
+            print(f"Error occurred: {e}")
 
 
 # Example usage
