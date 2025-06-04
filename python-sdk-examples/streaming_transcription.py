@@ -95,16 +95,20 @@ async def main():
                 await client.send_audio_stream(chunk)
                 audio_cursor += REALTIME_RESOLUTION
                 await asyncio.sleep(REALTIME_RESOLUTION)
-            
+
             await client.send_audio_stream(EOF_SIGNAL)
 
         # Finish streaming and get final results
-        result = await client.close_connection()
-        logging.info("Final result: %s", result)
+        await client.close_connection()
 
     except Exception as e:
         print(f"Error during streaming: {str(e)}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except asyncio.CancelledError:
+        logging.error("Streaming task was cancelled.")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
