@@ -76,13 +76,11 @@ async def send_audio(ws, wf, sample_rate):
     byte_rate = sample_rate * wf.getsampwidth() * wf.getnchannels()
 
     data = wf.readframes(wf.getnframes())
-    audio_cursor = 0
 
     while len(data):
         chunk_size = int(byte_rate * REALTIME_RESOLUTION)
         chunk, data = data[:chunk_size], data[chunk_size:]
         await ws.send_bytes(chunk)
-        audio_cursor += REALTIME_RESOLUTION
         await asyncio.sleep(REALTIME_RESOLUTION)
 
     # Send EOF JSON message
