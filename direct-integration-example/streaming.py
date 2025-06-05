@@ -71,13 +71,18 @@ async def receive_transcription(ws):
             break
 
 
-async def send_audio(ws, wf, buffer_size, interval_seconds):
-    while True:
-        data = wf.readframes(buffer_size)
-        if not data:
-            break
-        await ws.send_bytes(data)
-        await asyncio.sleep(interval_seconds)
+async def send_audio(ws, wf, sample_rate):
+    REALTIME_RESOLUTION = 0.02  # 20ms
+    byte_rate = sample_rate * wf.getsampwidth() * wf.getnchannels()
+
+    data = wf.readframes(wf.getnframes())
+
+    while len(data):
+        chunk_size = int(byte_rate * REALTIME_RESOLUTION)
+        chunk, data = data[:chunk_size], data[chunk_size:]
+        await ws.send_bytes(chunk)
+        await asyncio.sleep(REALTIME_RESOLUTION)
+
     # Send EOF JSON message
     await ws.send_str(EOF_MESSAGE)
 
@@ -87,8 +92,6 @@ async def run_test(api_key, customer_id, uri, filepath):
         "x-api-key": api_key,
         "x-customer-id": customer_id,
     }
-    chunk_duration_ms = 100
-
     connector = aiohttp.TCPConnector(
         ssl=ssl_context if uri.startswith("wss://") else None
     )
@@ -126,12 +129,7 @@ async def run_test(api_key, customer_id, uri, filepath):
                 )
                 await ws.send_str(config_msg)
 
-                buffer_size = int(sample_rate * chunk_duration_ms / 1000)
-                interval_seconds = chunk_duration_ms / 1000.0
-
-                send_task = asyncio.create_task(
-                    send_audio(ws, wf, buffer_size, interval_seconds)
-                )
+                send_task = asyncio.create_task(send_audio(ws, wf, sample_rate))
                 recv_task = asyncio.create_task(receive_transcription(ws))
 
                 await asyncio.gather(send_task, recv_task)
