@@ -11,7 +11,7 @@ This repository contains examples and instructions for interacting with the Nava
 
 ## Non-SDK Examples
 
-For direct API interaction without using the SDK, refer to the [Non-SDK Examples README](./direct-integration-example/readme.md).
+For direct API interaction without using the SDK, refer to the [Non-SDK Examples README](./direct-integration-example/README.md).
 
 ## SDK Examples
 
