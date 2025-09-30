@@ -11,11 +11,11 @@ This repository contains examples and instructions for interacting with the Nava
 
 ## Non-SDK Examples
 
-For direct API interaction without using the SDK, refer to the [Non-SDK Examples README](./non-sdk-examples/readme.md).
+For direct API interaction without using the SDK, refer to the [Non-SDK Examples README](./direct-integration-example/readme.md).
 
 ## SDK Examples
 
-For examples demonstrating the use of the Bodhi Python SDK, refer to the [SDK Examples README](./sdk-examples/README.md).
+For examples demonstrating the use of the Bodhi Python SDK, refer to the [SDK Examples README](./python-sdk-examples/README.md).
 
 ## Available ASR Models
 
