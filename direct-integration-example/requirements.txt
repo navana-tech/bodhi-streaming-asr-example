@@ -1,7 +1,4 @@
 aiohttp
-wave
-argparse
-asyncio
 certifi
 sounddevice
 numpy
