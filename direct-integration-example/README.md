@@ -108,9 +108,17 @@ $  python3 non-streaming-api.py -f ../loan.wav
 
 ```
 
-Options:
+Options for `streaming.py`:
 
--f: File name of the audio file to be streamed.
+- `-f`: File name of the audio file to be streamed.
+
+- `-m`: Model to transcribe with, e.g. `hi-banking-v2-8khz`. Defaults to `hi-banking-v2-8khz`. See the [model list](../README.md#available-asr-models).
+
+- `-e`: `endpoint_silence_duration` in seconds (`0.44` - `1.2`). Defaults to `0.44`. See [Endpoint Silence Threshold](#endpoint-silence-threshold).
+
+- `-u`: Server URL. Defaults to `wss://bodhi.navana.ai`.
+
+`streaming-microphone.py` takes the same two tuning options as `--model` and `--endpoint-silence-duration`.
 
 
 # Configuring the websocket
@@ -127,11 +135,46 @@ await ws.send(
                             "model": "hi-general-v2-8khz", // Required - specify the model you would like to use 
                             "parse_number" : True, // Optional - convert text representing numbers into numericals
                             "exclude_partial": True,  // Optional - only provide complete responses
+                            "endpoint_silence_duration": 0.44, // Optional - trailing silence, in seconds, after which an utterance is finalized (0.44 - 1.2, default 0.44)
                         }
                     }
                 )
             )
 ```
+
+# Endpoint Silence Threshold
+
+`endpoint_silence_duration` controls **endpointing**: how much trailing silence the recognizer waits for before it closes an utterance and emits a `complete` transcript. For a voice agent, that final transcript is the cue to respond, so this parameter directly trades response latency against interrupting the caller.
+
+| Property        | Value                                                          |
+| --------------- | -------------------------------------------------------------- |
+| Unit            | Seconds                                                        |
+| Default         | `0.44` — applied when the parameter is not provided            |
+| Minimum         | `0.44` — any lower value is automatically clamped up to `0.44` |
+| Maximum         | `1.2` — any higher value is automatically capped at `1.2`      |
+
+Both streaming scripts expose it as a flag, so you can compare settings against the same audio without editing code:
+
+```bash
+
+$  python streaming.py -f ../loan.wav -e 0.44   # default: fastest finals
+
+$  python streaming.py -f ../loan.wav -e 0.8    # tolerates longer pauses
+
+$  python streaming-microphone.py --endpoint-silence-duration 0.8
+
+```
+
+Each response line prints an `EndpointLag` value — the time between the last `partial` and the `complete` for that segment, which is approximately `endpoint_silence_duration` plus network and compute overhead. Use it to see the effect of a change.
+
+How to tune it:
+
+- If the agent **cuts callers off**, or one sentence arrives as several `complete` segments, the threshold is too low. Raise it in small steps (`0.45`, `0.5`, `0.55`).
+- If the agent **responds too late**, lower it back towards `0.44`.
+- Keep the lowest value at which cut-offs are acceptable — every extra 100 ms here is 100 ms added to every agent turn.
+- Speech with deliberate mid-sentence pauses (reading out an account number, thinking aloud) needs a higher value than fast conversational speech.
+
+Full reference: [Configurable Endpoint Silence Threshold](https://navana.gitbook.io/bodhi/quickstart/streaming-websocket/advanced-features#configurable-endpoint-silence-threshold)
 
 # Audio Stream Requirements
 
@@ -147,4 +190,4 @@ To ensure optimal compatibility and performance with our audio processing system
 
 - **Speakers**: Initially, support is provided for a single speaker per channel. However, support for multiple speakers on a single channel is under development and will be announced soon.
 
-For testing the code, modify the `.py` file with the model name you want to use.
+To test a different model, pass it on the command line (`-m` / `--model`) rather than editing the script.

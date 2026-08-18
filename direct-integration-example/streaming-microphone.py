@@ -4,6 +4,7 @@ import json
 import os
 import signal
 import sys
+import time
 import uuid
 
 import numpy as np
@@ -33,6 +34,21 @@ def get_args():
         type=str,
         default="wss://bodhi.navana.ai",
         help="Address of the server",
+    )
+
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="hi-general-v2-8khz",
+        help="ASR model to use (see README for the full list)",
+    )
+
+    parser.add_argument(
+        "--endpoint-silence-duration",
+        type=float,
+        metavar="SECONDS",
+        default=0.44,
+        help="Trailing silence after which an utterance is finalized (0.44 - 1.2 seconds)",
     )
 
     return parser.parse_args()
@@ -85,6 +101,11 @@ async def inputstream_generator(device, channels=1, samplerate=16000):
 async def receive_transcription(ws):
     complete_sentences = []
 
+    # Timestamp of the most recent partial per segment. The gap between that and the
+    # "complete" for the same segment is roughly the endpointing delay, i.e. the
+    # endpoint_silence_duration you configured plus network and compute overhead.
+    last_partial_at = {}
+
     async for msg in ws:
         if msg.type == WSMsgType.TEXT:
             response_data = json.loads(msg.data)
@@ -103,14 +124,22 @@ async def receive_transcription(ws):
             transcript_text = response_data["text"]
             end_of_stream = response_data["eos"]
 
-            if transcript_type == "complete" and transcript_text != "":
-                complete_sentences.append(response_data["text"])
+            endpoint_lag = "n/a"
+            if transcript_type == "partial":
+                last_partial_at[segment_id] = time.monotonic()
+            elif transcript_type == "complete":
+                started = last_partial_at.pop(segment_id, None)
+                if started is not None:
+                    endpoint_lag = f"{time.monotonic() - started:.2f}s"
+                if transcript_text != "":
+                    complete_sentences.append(response_data["text"])
 
             print(
                 f"Received data: Call_id={call_id}, "
                 f"Segment_id={segment_id}, "
                 f"EOS={end_of_stream}, "
                 f"Type={transcript_type}, "
+                f"EndpointLag={endpoint_lag}, "
                 f"Text={transcript_text}"
             )
 
@@ -128,7 +157,12 @@ async def receive_transcription(ws):
 
 
 async def run(
-    server_addr: str, device: int, samplerate: int, stop_event: asyncio.Event
+    server_addr: str,
+    device: int,
+    samplerate: int,
+    stop_event: asyncio.Event,
+    model: str = "hi-general-v2-8khz",
+    endpoint_silence_duration: float = 0.44,
 ):
     # Fetch API key and customer ID from environment variables
     api_key = os.environ.get("API_KEY")
@@ -151,10 +185,18 @@ async def run(
                             "config": {
                                 "sample_rate": samplerate,
                                 "transaction_id": str(uuid.uuid4()),
-                                "model": "hi-general-v2-8khz",
-                                # Change the model based on your preference
-                                # Kannada - kn-general-v2-8khz
-                                # Hindi - hi-general-v2-8khz
+                                # Pass a different model with --model. See the full list
+                                # in the repository README. All models except English,
+                                # Gujarati and Odia are bilingual with English.
+                                "model": model,
+                                # Trailing silence, in seconds, after which the recognizer
+                                # closes the utterance and emits a "complete" transcript.
+                                # Default 0.44; the server clamps the value to 0.44 - 1.2.
+                                # Speak with a deliberate mid-sentence pause and compare
+                                # --endpoint-silence-duration 0.44 against 1.2 to see the
+                                # trade-off between sentences getting split and added latency.
+                                # https://navana.gitbook.io/bodhi/quickstart/streaming-websocket/advanced-features#configurable-endpoint-silence-threshold
+                                "endpoint_silence_duration": endpoint_silence_duration,
                             }
                         }
                     )
@@ -226,6 +268,10 @@ async def main():
     server_addr = args.server_addr
     device, samplerate = select_device()
     print(f"Using device {device} with samplerate {samplerate}")
+    print(
+        f"Using model {args.model} with "
+        f"endpoint_silence_duration {args.endpoint_silence_duration}s"
+    )
 
     stop_event = asyncio.Event()
 
@@ -241,6 +287,8 @@ async def main():
             device=device,
             samplerate=samplerate,
             stop_event=stop_event,
+            model=args.model,
+            endpoint_silence_duration=args.endpoint_silence_duration,
         )
 
     except asyncio.CancelledError:

@@ -79,9 +79,12 @@ if __name__ == "__main__":
         "-m",
         dest="model",
         default="hi-general-v2-8khz",
+        # Keep in sync with the model list in the repository README
         choices=[
             "hi-general-v2-8khz",
             "hi-banking-v2-8khz",
+            "hi-en-general-v2-8khz",
+            "hi-en-banking-v2-8khz",
             "kn-general-v2-8khz",
             "kn-banking-v2-8khz",
             "mr-general-v2-8khz",
@@ -98,6 +101,7 @@ if __name__ == "__main__":
             "te-banking-v2-8khz",
             "ml-general-v2-8khz",
             "ml-banking-v2-8khz",
+            "or-general-v3-8khz",
         ],
         help="Model name for transcription (default: hi-general-v2-8khz)",
     )
