@@ -6,6 +6,7 @@ import json
 import os
 import uuid
 import ssl
+import time
 import argparse
 
 EOF_MESSAGE = '{"eof": 1}'
@@ -25,6 +26,13 @@ def int_or_str(text):
 
 async def receive_transcription(ws):
     complete_sentences = []
+
+    # Timestamp of the most recent partial per segment. The gap between that and the
+    # "complete" for the same segment is roughly the endpointing delay, i.e. the
+    # endpoint_silence_duration you configured plus network and compute overhead.
+    # Watch this number while tuning endpoint_silence_duration.
+    last_partial_at = {}
+
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.TEXT:
             try:
@@ -46,14 +54,22 @@ async def receive_transcription(ws):
                 transcript_text = response_data.get("text")
                 end_of_stream = response_data.get("eos", False)
 
-                if transcript_type == "complete" and transcript_text != "":
-                    complete_sentences.append(transcript_text)
+                endpoint_lag = "n/a"
+                if transcript_type == "partial":
+                    last_partial_at[segment_id] = time.monotonic()
+                elif transcript_type == "complete":
+                    started = last_partial_at.pop(segment_id, None)
+                    if started is not None:
+                        endpoint_lag = f"{time.monotonic() - started:.2f}s"
+                    if transcript_text != "":
+                        complete_sentences.append(transcript_text)
 
                 print(
                     f"Received data: Call_id={call_id}, "
                     f"Segment_id={segment_id}, "
                     f"EOS={end_of_stream}, "
                     f"Type={transcript_type}, "
+                    f"EndpointLag={endpoint_lag}, "
                     f"Text={transcript_text}"
                 )
 
@@ -87,7 +103,9 @@ async def send_audio(ws, wf, sample_rate):
     await ws.send_str(EOF_MESSAGE)
 
 
-async def run_test(api_key, customer_id, uri, filepath):
+async def run_test(
+    api_key, customer_id, uri, filepath, model, endpoint_silence_duration
+):
     request_headers = {
         "x-api-key": api_key,
         "x-customer-id": customer_id,
@@ -114,18 +132,26 @@ async def run_test(api_key, customer_id, uri, filepath):
                         "config": {
                             "sample_rate": sample_rate,
                             "transaction_id": str(uuid.uuid4()),
-                            "model": "hi-banking-v2-8khz",
-                            # Change the model based on your preference
-                            # Kannada - kn-banking-v2-8khz
-                            # Hindi - hi-banking-v2-8khz
-                            # Marathi - mr-banking-v2-8khz
-                            # Tamil - ta-banking-v2-8khz
-                            # Bengali - bn-banking-v2-8khz
-                            # English - en-banking-v2-8khz
-                            # Gujarati - gu-banking-v2-8khz
-                            # Malayalam - ml-banking-v2-8khz
+                            # Pass a different model with -m / --model. See the full list
+                            # in the repository README. All models except English,
+                            # Gujarati and Odia are bilingual with English.
+                            "model": model,
+                            # Trailing silence, in seconds, after which the recognizer
+                            # closes the utterance and emits a "complete" transcript.
+                            # Default 0.44; the server clamps the value to 0.44 - 1.2.
+                            # Lower  -> faster finals, but a natural pause can split a sentence.
+                            # Higher -> tolerates pauses, at the cost of that much extra latency.
+                            # Raise it in small steps (0.45, 0.5, 0.55) if your voice agent
+                            # cuts callers off, and keep the lowest value that behaves well.
+                            # https://navana.gitbook.io/bodhi/quickstart/streaming-websocket/advanced-features#configurable-endpoint-silence-threshold
+                            "endpoint_silence_duration": endpoint_silence_duration,
                         }
                     }
+                )
+                print(
+                    f"Using model={model}, "
+                    f"endpoint_silence_duration={endpoint_silence_duration}s",
+                    file=sys.stderr,
                 )
                 await ws.send_str(config_msg)
 
@@ -182,11 +208,33 @@ async def main():
         default="wss://bodhi.navana.ai",
     )
     parser.add_argument("-f", "--file", type=str, help="wave/audio file path")
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        help="ASR model to use, e.g. hi-banking-v2-8khz (see README for the full list)",
+        default="hi-banking-v2-8khz",
+    )
+    parser.add_argument(
+        "-e",
+        "--endpoint-silence-duration",
+        type=float,
+        metavar="SECONDS",
+        help="Trailing silence after which an utterance is finalized (0.44 - 1.2 seconds)",
+        default=0.44,
+    )
 
     args = parser.parse_args(remaining)
 
     if args.file:
-        await run_test(api_key, customer_id, args.uri, args.file)
+        await run_test(
+            api_key,
+            customer_id,
+            args.uri,
+            args.file,
+            args.model,
+            args.endpoint_silence_duration,
+        )
     else:
         print(
             "This script is meant to show how to connect to Navana Streaming Speech Recognition API endpoint through websockets\n"
@@ -195,7 +243,8 @@ async def main():
             "Please pass the file path as an argument to stream a prerecorded audio file\n"
         )
         print("How to run the script:")
-        print("python3 streaming_client_demo.py -f streaming_demo.wav")
+        print("python3 streaming.py -f ../loan.wav")
+        print("python3 streaming.py -f ../loan.wav -m hi-banking-v2-8khz -e 0.6")
 
 
 if __name__ == "__main__":

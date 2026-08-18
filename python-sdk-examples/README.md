@@ -22,6 +22,10 @@ This folder contains example scripts demonstrating how to use the Bodhi Python S
 - `remote_transcription.py`: Demonstrates remote URL transcription
 - `streaming_transcription.py`: Demonstrates streaming transcription
 
+## Notes
+
+- `TranscriptionConfig` in `bodhi-sdk` 1.2.0 supports `model`, `transaction_id`, `sample_rate`, `parse_number`, `hotwords`, `aux`, `exclude_partial`, `at_start_lid` and `transliterate`. Endpointing (`endpoint_silence_duration`) is not exposed by the SDK yet — use the [direct WebSocket examples](../direct-integration-example/README.md#endpoint-silence-threshold) if you need to tune it.
+
 ## Running Examples
 
 ```bash
